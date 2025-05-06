@@ -9,15 +9,40 @@ const testUser = {
   name: 'Test User',
   recoveryStreak: 5,
   exercisesLeft: 3,
+  todaysGoals: [
+    { id: 1, name: 'Exercise 1', completed: false },
+    { id: 2, name: 'Exercise 2', completed: false },
+    { id: 3, name: 'Exercise 3', completed: false }
+  ]
 };
 
 export default function DashboardScreen() {
   const [user] = useState(testUser);
   const [showWelcome, setShowWelcome] = useState(true);
+  const [goals, setGoals] = useState(user.todaysGoals);
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const streakCount = useRef(new Animated.Value(0)).current;
   const exercisesCount = useRef(new Animated.Value(0)).current;
+  const goalAnimations = useRef(goals.map(() => new Animated.Value(0))).current;
+
+  const toggleGoal = (goalId: number) => {
+    const goalIndex = goals.findIndex(g => g.id === goalId);
+    const isCompleted = !goals[goalIndex].completed;
+    
+    // Animate the checkbox
+    Animated.sequence([
+      Animated.timing(goalAnimations[goalIndex], {
+        toValue: isCompleted ? 1 : 0,
+        duration: 300,
+        useNativeDriver: true,
+      })
+    ]).start();
+
+    setGoals(goals.map(goal => 
+      goal.id === goalId ? { ...goal, completed: !goal.completed } : goal
+    ));
+  };
 
   useEffect(() => {
     // Welcome screen animation
@@ -27,7 +52,7 @@ export default function DashboardScreen() {
         duration: 500,
         useNativeDriver: true,
       }),
-      Animated.delay(3000),
+      Animated.delay(2000),
       Animated.timing(fadeAnim, {
         toValue: 0,
         duration: 500,
@@ -130,6 +155,65 @@ export default function DashboardScreen() {
             <Text style={styles.counterLabel}>Exercises Left</Text>
           </View>
         </View>
+
+        <TouchableOpacity 
+          style={styles.checkInButton}
+          onPress={() => {
+            console.log('Daily check-in pressed');
+          }}
+        >
+          <MaterialCommunityIcons name="calendar-check" size={24} color="white" />
+          <Text style={styles.checkInButtonText}>Daily Check-in</Text>
+        </TouchableOpacity>
+
+        {/* Today's Goals Section */}
+        <View style={styles.goalsSection}>
+          <View style={styles.sectionHeader}>
+            <MaterialCommunityIcons name="clipboard-list" size={24} color="white" />
+            <Text style={styles.sectionTitle}>Today's Goals</Text>
+          </View>
+          
+          <View style={styles.checklist}>
+            {goals.map((goal, index) => (
+              <TouchableOpacity 
+                key={goal.id}
+                style={styles.checklistItem}
+                onPress={() => toggleGoal(goal.id)}
+              >
+                <Animated.View style={[
+                  styles.checkboxContainer,
+                  {
+                    transform: [{
+                      scale: goalAnimations[index].interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [1, 1.2]
+                      })
+                    }]
+                  }
+                ]}>
+                  <MaterialCommunityIcons 
+                    name={goal.completed ? "checkbox-marked" : "checkbox-blank-outline"} 
+                    size={24} 
+                    color="white" 
+                  />
+                </Animated.View>
+                <Animated.Text style={[
+                  styles.checklistText,
+                  goal.completed && styles.completedText,
+                  {
+                    opacity: goalAnimations[index].interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [1, 0.7]
+                    })
+                  }
+                ]}>
+                  {goal.name}
+                </Animated.Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+
       </ScrollView>
     </LinearGradient>
   );
@@ -236,5 +320,76 @@ const styles = StyleSheet.create({
     opacity: 0.9,
     marginTop: 5,
     textAlign: 'center',
+  },
+  checkInButton: {
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    marginTop: 20,
+    marginHorizontal: 0,
+    padding: 16,
+    borderRadius: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  checkInButtonText: {
+    color: 'white',
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginLeft: 10,
+  },
+  goalsSection: {
+    marginTop: 30,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    borderRadius: 15,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: 'white',
+    marginLeft: 10,
+  },
+  checklist: {
+    gap: 12,
+  },
+  checklistItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    padding: 12,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  checklistText: {
+    fontSize: 16,
+    color: 'white',
+    marginLeft: 10,
+  },
+  completedText: {
+    textDecorationLine: 'line-through',
+  },
+  checkboxContainer: {
+    width: 24,
+    height: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

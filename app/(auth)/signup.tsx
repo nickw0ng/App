@@ -56,7 +56,12 @@ export default function SignupScreen() {
             />
           </View>
 
-          <TouchableOpacity style={styles.signupButton}>
+          <TouchableOpacity 
+            style={styles.signupButton}
+            onPress={() => {
+              router.push('/(auth)/profile-setup/personal-info');
+            }}
+          >
             <Text style={styles.signupButtonText}>Sign Up</Text>
           </TouchableOpacity>
 
